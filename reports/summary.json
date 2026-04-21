@@ -1,0 +1,50 @@
+{
+  "v1": {
+    "metadata": {
+      "agent_version": "v1",
+      "total_cases": 55,
+      "timestamp": "2026-04-21 15:02:44"
+    },
+    "metrics": {
+      "avg_score": 2.85,
+      "hit_rate": 0.33,
+      "mrr": 0.2,
+      "avg_latency": 0.87,
+      "total_cost": 0.0049,
+      "agreement_rate": 0.69
+    }
+  },
+  "v2": {
+    "metadata": {
+      "agent_version": "v2",
+      "total_cases": 55,
+      "timestamp": "2026-04-21 15:08:13"
+    },
+    "metrics": {
+      "avg_score": 3.47,
+      "hit_rate": 0.38,
+      "mrr": 0.26,
+      "avg_latency": 0.46,
+      "total_cost": 0.0812,
+      "agreement_rate": 0.69
+    }
+  },
+  "regression": {
+    "score_delta": 0.62,
+    "latency_change_percent": -47.13,
+    "decision": "APPROVE"
+  },
+  "metadata": {
+    "agent_version": "v2",
+    "total_cases": 55,
+    "timestamp": "2026-04-21 15:08:13"
+  },
+  "metrics": {
+    "avg_score": 3.47,
+    "hit_rate": 0.38,
+    "mrr": 0.26,
+    "avg_latency": 0.46,
+    "total_cost": 0.0812,
+    "agreement_rate": 0.69
+  }
+}
