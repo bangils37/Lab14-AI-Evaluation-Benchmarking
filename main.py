@@ -35,7 +35,7 @@ async def run_benchmark_for_version(version: str, dataset: List[Dict]) -> Dict:
     summary = {
         "metadata": {
             "agent_version": version,
-            "total_cases": total,
+            "total": total,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         },
         "metrics": {
