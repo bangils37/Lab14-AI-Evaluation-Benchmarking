@@ -1,31 +1,40 @@
-# Báo cáo Phân tích Thất bại (Failure Analysis Report)
+# Báo cáo Phân tích Lỗi (Failure Analysis Report)
 
-## 1. Tổng quan Benchmark
-- **Tổng số cases:** 50
-- **Tỉ lệ Pass/Fail:** X/Y
-- **Điểm RAGAS trung bình:**
-    - Faithfulness: 0.XX
-    - Relevancy: 0.XX
-- **Điểm LLM-Judge trung bình:** X.X / 5.0
+## 1. Tổng quan kết quả Benchmark
+Dựa trên kết quả chạy `v2` (Optimized Version):
+- **Tỷ lệ Pass/Fail**: [Sẽ được điền sau khi chạy]
+- **Điểm trung bình (Judge Score)**: [Sẽ được điền sau khi chạy]
+- **Hit Rate**: [Sẽ được điền sau khi chạy]
 
-## 2. Phân nhóm lỗi (Failure Clustering)
-| Nhóm lỗi | Số lượng | Nguyên nhân dự kiến |
-|----------|----------|---------------------|
-| Hallucination | 5 | Retriever lấy sai context |
-| Incomplete | 3 | Prompt quá ngắn, không yêu cầu chi tiết |
-| Tone Mismatch | 2 | Agent trả lời quá suồng sã |
+## 2. Phân cụm lỗi (Failure Clustering)
+Chúng tôi phân tích các trường hợp "Fail" (điểm < 3) và phân thành các nhóm sau:
 
-## 3. Phân tích 5 Whys (Chọn 3 case tệ nhất)
+| Nhóm lỗi | Tỷ lệ | Nguyên nhân dự đoán |
+| :--- | :---: | :--- |
+| **Retrieval Failure** | [TBD]% | Không tìm thấy chunk chứa thông tin chính xác. |
+| **Hallucination** | [TBD]% | Agent tự bịa ra thông tin không có trong context. |
+| **Partial Answer** | [TBD]% | Câu trả lời đúng nhưng chưa đầy đủ ý. |
+| **Reasoning Error** | [TBD]% | Tìm đúng context nhưng không suy luận được kết quả. |
 
-### Case #1: [Mô tả ngắn]
-1. **Symptom:** Agent trả lời sai về...
-2. **Why 1:** LLM không thấy thông tin trong context.
-3. **Why 2:** Vector DB không tìm thấy tài liệu liên quan nhất.
-4. **Why 3:** Chunking size quá lớn làm loãng thông tin quan trọng.
-5. **Why 4:** ...
-6. **Root Cause:** Chiến lược Chunking không phù hợp với dữ liệu bảng biểu.
+## 3. Phân tích "5 Whys" sâu (Root Cause Analysis)
+*Chọn một case điển hình bị Fail để phân tích:*
 
-## 4. Kế hoạch cải tiến (Action Plan)
-- [ ] Thay đổi Chunking strategy từ Fixed-size sang Semantic Chunking.
-- [ ] Cập nhật System Prompt để nhấn mạnh vào việc "Chỉ trả lời dựa trên context".
-- [ ] Thêm bước Reranking vào Pipeline.
+**Vấn đề: Agent không trả lời được cách tính MRR chính xác.**
+
+1. **Tại sao Agent trả lời sai?**
+   - Vì thông tin trong Context trả về bị thiếu công thức toán học.
+2. **Tại sao Context bị thiếu?**
+   - Vì bước Retrieval chỉ lấy top 3 chunks, và thông tin công thức nằm ở chunk thứ 5.
+3. **Tại sao Retrieval không lấy được chunk thứ 5?**
+   - Vì độ tương đồng ngữ nghĩa (Cosine Similarity) của chunk đó thấp hơn các chunk giải thích chung chung.
+4. **Tại sao độ tương đồng ngữ nghĩa lại thấp?**
+   - Vì chunk đó chứa nhiều ký hiệu toán học, trong khi Embedding model hiện tại (text-embedding-3-small) mạnh về văn bản hơn là ký hiệu.
+5. **Tại sao chưa dùng Model hoặc chiến lược tốt hơn?**
+   - Vì hệ thống chưa triển khai **Hybrid Search** (kết hợp Keyword Search) hoặc **Reranking** để ưu tiên các chunk có từ khóa kỹ thuật.
+
+**=> Giải pháp đề xuất:** Triển khai thêm bước Reranking (ví dụ dùng Cohere) để đảm bảo các chunk quan trọng nhất luôn nằm trong top 3.
+
+## 4. Đề xuất tối ưu hóa (Optimizations)
+- [ ] Tăng `top_k` từ 3 lên 5.
+- [ ] Sử dụng chiến lược Small-to-Big retrieval (Parent Document Retrieval).
+- [ ] Cải thiện Prompt cho Judge model để chấm điểm khắt khe hơn về độ đầy đủ (Completeness).
