@@ -1,7 +1,6 @@
 import asyncio
 import time
 from typing import List, Dict, Any
-from tqdm.asyncio import tqdm
 
 class BenchmarkRunner:
     def __init__(self, agent, evaluator, judge):
@@ -59,15 +58,25 @@ class BenchmarkRunner:
 
     async def run_all(self, dataset: List[Dict], batch_size: int = 10) -> List[Dict]:
         """
-        Chạy song song bằng asyncio.gather với giới hạn batch_size.
+        Chạy tuần tự để giảm số request đồng thời và tránh vượt quota.
         """
         results = []
-        print(f"🚀 Chạy benchmark cho {len(dataset)} cases (Batch size: {batch_size})...")
-        
-        for i in range(0, len(dataset), batch_size):
-            batch = dataset[i:i + batch_size]
-            tasks = [self.run_single_test(case) for case in batch]
-            batch_results = await asyncio.gather(*tasks)
-            results.extend(batch_results)
-            
+        total_cases = len(dataset)
+        print(f"🚀 Chạy benchmark cho {total_cases} cases (Batch size: {batch_size})...")
+
+        for idx, case in enumerate(dataset, start=1):
+            question = case.get("question", "")
+            preview = (question[:70] + "...") if len(question) > 70 else question
+            print(f"[{idx}/{total_cases}] ▶ Running: {preview}")
+
+            result = await self.run_single_test(case)
+            results.append(result)
+
+            status = result.get("status", "unknown")
+            latency = result.get("latency")
+            if isinstance(latency, (int, float)):
+                print(f"[{idx}/{total_cases}] ✓ Done | status={status} | latency={latency:.2f}s")
+            else:
+                print(f"[{idx}/{total_cases}] ✓ Done | status={status}")
+
         return results

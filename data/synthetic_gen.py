@@ -15,7 +15,7 @@ async def generate_qa_batch(text_chunk: str, chunk_id: str, num_pairs: int = 5) 
     """
     Sử dụng Google Gemini để tạo các cặp (Question, Expected Answer, Context) từ một đoạn văn bản.
     """
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemma-3-27b-it')
     
     prompt = f"""
     Bạn là một chuyên gia đánh giá AI (AI Evaluation Expert). 

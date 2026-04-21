@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class LLMJudge:
-    def __init__(self, model_a: str = "gemini-1.5-pro", model_b: str = "gemini-1.5-flash"):
+    def __init__(self, model_a: str = "gemma-3-4b-it", model_b: str = "gemma-3-27b-it"):
         genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
         self.model_a_name = model_a
         self.model_b_name = model_b
@@ -18,6 +18,17 @@ class LLMJudge:
             "tone": "Chấm điểm từ 1-5 dựa trên sự chuyên nghiệp, lịch sự và phù hợp của ngôn ngữ.",
             "completeness": "Chấm điểm từ 1-5 dựa trên việc câu trả lời có bao quát hết các ý chính trong Ground Truth không."
         }
+
+    def _normalize_score(self, payload: Any) -> Dict[str, Any]:
+        if isinstance(payload, dict):
+            return payload
+
+        if isinstance(payload, list) and payload:
+            first_item = payload[0]
+            if isinstance(first_item, dict):
+                return first_item
+
+        raise ValueError(f"Unexpected judge payload type: {type(payload).__name__}")
 
     async def _call_judge(self, model_name: str, question: str, answer: str, ground_truth: str) -> Dict[str, Any]:
         model = genai.GenerativeModel(model_name)
@@ -35,7 +46,7 @@ class LLMJudge:
         2. Tone: {self.rubrics['tone']}
         3. Completeness: {self.rubrics['completeness']}
 
-        Trả về định dạng JSON list thuần túy:
+        Trả về đúng MỘT JSON object thuần túy, không bọc trong list:
         {{
             "accuracy": <score 1-5>,
             "tone": <score 1-5>,
@@ -51,7 +62,8 @@ class LLMJudge:
             elif "```" in text:
                 text = text.split("```")[1].split("```")[0].strip()
                 
-            return json.loads(text)
+            parsed = json.loads(text)
+            return self._normalize_score(parsed)
         except Exception as e:
             print(f"Error calling judge {model_name}: {e}")
             return {"accuracy": 1, "tone": 1, "completeness": 1, "reasoning": "Error in judging."}
@@ -60,10 +72,8 @@ class LLMJudge:
         """
         EXPERT TASK: Gọi ít nhất 2 model Gemini.
         """
-        task_a = self._call_judge(self.model_a_name, question, answer, ground_truth)
-        task_b = self._call_judge(self.model_b_name, question, answer, ground_truth)
-        
-        score_a, score_b = await asyncio.gather(task_a, task_b)
+        score_a = await self._call_judge(self.model_a_name, question, answer, ground_truth)
+        score_b = await self._call_judge(self.model_b_name, question, answer, ground_truth)
         
         final_accuracy = (score_a["accuracy"] + score_b["accuracy"]) / 2
         
